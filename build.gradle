@@ -1,0 +1,55 @@
+plugins {
+    id 'java'
+    id "io.freefair.lombok" version '8.2.2' // Плагин для поддержки Lombok, упрощает работу с Java-кодом
+    id 'io.qameta.allure' version '2.9.6' // Плагин для интеграции Allure Reports, для генерации отчетов о тестировании
+}
+
+group = 'ru.topacademy'
+version = '1.0-SNAPSHOT'
+
+sourceCompatibility = 11
+
+// Кодировка файлов (если используете русский язык в файлах)
+compileJava.options.encoding = "UTF-8"
+compileTestJava.options.encoding = "UTF-8"
+
+
+allure {
+    version = '2.20.1'
+    useJUnit5 {
+        version = '2.20.1'
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'com.codeborne:selenide:6.17.2' // Библиотека Selenide для автоматизации тестирования веб-приложений
+    testImplementation 'io.qameta.allure:allure-junit5:2.20.1' // Интеграция Allure с JUnit 5 для отчетов о тестах
+    testImplementation 'io.qameta.allure:allure-selenide:2.20.1'
+
+    testImplementation 'mysql:mysql-connector-java:8.0.32' // Драйвер MySQL для подключения к базе данных в тестах
+    testImplementation 'commons-dbutils:commons-dbutils:1.7' // Утилиты для работы с базами данных
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.9.2' // WebDriverManager для автоматической настройки драйверов браузеров
+    testImplementation 'com.github.javafaker:javafaker:1.0.2' // Библиотека для генерации случайных данных (для тестов)
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.9.1' // JUnit 5 движок для выполнения тестов
+
+}
+
+test {
+    useJUnitPlatform()
+
+    systemProperty 'db.url', System.getProperty('db.url')
+    systemProperty 'db.user', System.getProperty('db.user', 'app')
+    systemProperty 'db.password', System.getProperty('db.password', 'pass')
+    systemProperty 'sut.url', System.getProperty('sut.url', 'http://localhost:8080') // URL системы, подлежащей тестированию
+
+    // Передача параметров для Chrome, отключение утечки менеджера паролей
+    systemProperty 'chromeoptions.prefs', System.getProperty('chromeoptions.prefs', "profile.password_manager_leak_detection=false")
+
+
+}

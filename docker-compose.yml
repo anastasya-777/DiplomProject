@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: "yes"
+      MYSQL_DATABASE: "app"
+      MYSQL_USER: "app"
+      MYSQL_PASSWORD: "pass"
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/dataBase:/docker-entrypoint-initdb.d
+
+  postgres:
+    image:
+      postgres:13-alpine
+    container_name: postgres_db
+    environment:
+      POSTGRES_DB: "app"
+      POSTGRES_USER: "app"
+      POSTGRES_PASSWORD: "9mREsvXDs9Gk89Ef"
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./data/dataBase:/docker-entrypoint-initdb.d
+
+
+  gate-simulator:
+    build: ./gate-simulator
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./gate-simulator/data.json:/app/data.json
