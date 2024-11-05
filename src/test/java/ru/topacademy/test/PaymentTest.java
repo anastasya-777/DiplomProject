@@ -2,7 +2,7 @@ package ru.topacademy.test;
 import com.codeborne.selenide.logevents.SelenideLogger;
 import io.qameta.allure.selenide.AllureSelenide;
 import org.junit.jupiter.api.*;
-import ru.topacademy.Data.DataMySql;
+import ru.topacademy.Data.DataSql;
 import ru.topacademy.Data.DataHelper;
 import ru.topacademy.Pages.PaymentPage;
 
@@ -23,13 +23,13 @@ public class PaymentTest {
 
     @BeforeEach
     void clearDatabaseTables() {
-        DataMySql.clearTables();
+        DataSql.clearTables();
     }
 
-    // Позитивные сценарии (оплата тура дебетовой картой)
+    // Сценарии на проверку статуса оплаты тура дебетовой картой
 
     @Test
-    @DisplayName("1. Оплата тура с валидной дебетовой картой")
+    @DisplayName("1. Оплата тура с валидной дебетовой картой со статусом APPROVED")
     public void testCashValidCard() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -40,59 +40,26 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findPayStatus());
+        assertEquals("APPROVED", DataSql.findPayStatus());
     }
 
-    @Test
-    @DisplayName("2. Повторная оплата тура с валидной дебетовой картой")
-    public void testRepeatCashValidCard() {
-        testCashValidCard();
-    }
 
     @Test
-    @DisplayName("3. Оплата тура с дебетовой картой с достаточным балансом")
-    public void testCashCardWithSufficientBalance() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
+    @DisplayName("2.Оплата тура с валидной дебетовой картой со статусом DECLINED")
+    public void testCashValidCardDeclined() {
+        var paymentPage = open("http://localhost:8080",  PaymentPage.class);
         paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
+        paymentPage.setCardNumber(DataHelper.getCardNumberDeclined());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
+        paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findPayStatus());
+        paymentPage.messageError();
+        assertEquals("DECLINED", DataSql.findPayStatus());
     }
 
-    @Test
-    @DisplayName("4. Оплата тура с дебетовой картой с недостаточным балансом, но с возможностью списания средств")
-    public void testCashCardWithInsufficientBalanceButPossible() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findPayStatus());
-    }
 
-    @Test
-    @DisplayName("5. Оплата тура с дебетовой картой с ограничениями на проведение операций")
-    public void testCashCardWithOperationRestrictions() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findPayStatus());
-    }
 
     // Негативные сценарии (валидации дебетовой карты)
 
@@ -108,7 +75,7 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.messageError();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
@@ -116,18 +83,18 @@ public class PaymentTest {
     public void testCashCardNotFilled() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
-        paymentPage.setCardNumber("444444444444444");
+        paymentPage.setCardNumber(DataHelper.getCardNumberNotFilled());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("3. Попытка оплаты тура с невалидными данными владельца дебетовой карты")
+    @DisplayName("3. Попытка оплаты тура с невалидными данными владельца дебетовой карты(кириллица)")
     public void testCashInvalidOwnerName() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -137,12 +104,12 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("4. Попытка оплаты тура с невалидным сроком действия дебетовой карты")
+    @DisplayName("4. Попытка оплаты тура с невалидным сроком действия дебетовой карты(13 месяц)")
     public void testCashInvalidExpirationDate() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -153,11 +120,11 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("5. Попытка оплаты тура с невалидным CVV кодом дебетовой карты")
+    @DisplayName("5. Попытка оплаты тура с невалидным CVV кодом дебетовой карты(1 цифра)")
     public void testCashInvalidCvcCode() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -168,11 +135,11 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.get1Cvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("6. Попытка оплаты тура с невалидным месяцем дебетовой карты")
+    @DisplayName("6. Попытка оплаты тура с невалидным месяцем дебетовой карты(00)")
     public void testCashInvalidMonth() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -183,82 +150,82 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("7. Попытка оплаты тура с невалидным годом дебетовой карты")
+    @DisplayName("7. Попытка оплаты тура с невалидным годом дебетовой карты(истекший)")
     public void testCashInvalidYear() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
         paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear("23");
+        paymentPage.setCardYear(DataHelper.getPreviousYear());
         paymentPage.setCardUser (DataHelper.getUser ());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.cardExpired();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("8. Попытка оплаты тура с заполненным только номером дебетовой карты")
+    @DisplayName("8. Попытка оплаты тура с не заполненным только номером дебетовой карты")
     public void testCashOnlyCardNumber() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardNumber("4444 4444 4444 4442");
-        paymentPage.setCardMonth(DataHelper.getEmptyMonth());
-        paymentPage.setCardYear(DataHelper.getEmptyYear());
-        paymentPage.setCardUser(DataHelper.getEmptyUser());
-        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
-
-    @Test
-    @DisplayName("9. Попытка оплаты тура с заполненным только именем владельца дебетовой карты")
-    public void testCashOnlyOwnerName() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardMonth(DataHelper.getEmptyMonth());
-        paymentPage.setCardYear(DataHelper.getEmptyYear());
-        paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
-        paymentPage.setCardUser ("Ivanov Ivan");
-        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
-
-    @Test
-    @DisplayName("10. Попытка оплаты тура с заполненным только сроком действия дебетовой карты")
-    public void testCashOnlyExpirationDate() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardUser(DataHelper.getEmptyUser());
-        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("11. Попытка оплаты тура с заполненным только кодом безопасности дебетовой карты")
+    @DisplayName("9. Попытка оплаты тура с не заполненным только именем владельца дебетовой карты")
+    public void testCashOnlyOwnerName() {
+        var paymentPage = open("http://localhost:8080", PaymentPage.class);
+        paymentPage.buyWithCash();
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getYear());
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardUser (DataHelper.getEmptyUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
+        paymentPage.clickContinueButton();
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
+    }
+
+    @Test
+    @DisplayName("10. Попытка оплаты тура с не заполненным только сроком действия дебетовой карты(год)")
+    public void testCashOnlyExpirationDate() {
+        var paymentPage = open("http://localhost:8080", PaymentPage.class);
+        paymentPage.buyWithCash();
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getEmptyYear());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
+        paymentPage.clickContinueButton();
+        paymentPage.incorrectFormat();
+        assertEquals(0, DataSql.getOrderEntityCount());
+    }
+
+    @Test
+    @DisplayName("11. Попытка оплаты тура с не заполненным только кодом безопасности дебетовой карты")
     public void testCashOnlyCvc() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
-        paymentPage.setCardMonth(DataHelper.getEmptyMonth());
-        paymentPage.setCardYear(DataHelper.getEmptyYear());
-        paymentPage.setCardUser(DataHelper.getEmptyUser());
-        paymentPage.setCardCVC("123");
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getYear());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
@@ -268,31 +235,18 @@ public class PaymentTest {
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
         paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear("45");
+        paymentPage.setCardYear(DataHelper.getCurrentYearPlus6());
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
-    @Test
-    @DisplayName("13. Попытка оплаты тура с невалидным форматом номера дебетовой карты")
-    public void testCashInvalidCardFormat() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberNotFilled());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
+
 
     @Test
-    @DisplayName("14. Попытка оплаты тура с невалидным форматом имени владельца дебетовой карты")
+    @DisplayName("13. Попытка оплаты тура с невалидным форматом имени владельца дебетовой карты(3 слова)")
     public void testCashInvalidOwnerFormat() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -302,27 +256,14 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
-    @Test
-    @DisplayName("15. Попытка оплаты тура с невалидным форматом срока действия дебетовой карты")
-    public void testCashInvalidExpirationFormat() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyWithCash();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getCurrentYearPlus6());
-        paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
+
 
     @Test
-    @DisplayName("16. Попытка оплаты тура с невалидным форматом CVV кода дебетовой карты")
+    @DisplayName("14. Попытка оплаты тура с невалидным форматом CVV кода дебетовой карты(2 цифры)")
     public void testCashInvalidCvcFormat() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -330,44 +271,44 @@ public class PaymentTest {
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC("12");
+        paymentPage.setCardCVC(DataHelper.get2Cvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("17. Попытка оплаты тура с невалидными данными владельца дебетовой карты")
+    @DisplayName("15. Попытка оплаты тура с невалидными данными владельца дебетовой карты(символы)")
     public void testCashInvalidOwnerSpecialCharacters() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("%;%:?*(@!$");
+        paymentPage.setCardUser(DataHelper.getSpecialCharactersUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("18. Попытка оплаты тура с невалидными данными владельца дебетовой карты (цифра)")
+    @DisplayName("16. Попытка оплаты тура с невалидными данными владельца дебетовой карты (цифра)")
     public void testCashInvalidOwnerNumber() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("1");
+        paymentPage.setCardUser(DataHelper.getNumberUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("19. Попытка оплаты тура с невалидными данными владельца дебетовой карты (кириллица 1 буква)")
+    @DisplayName("17. Попытка оплаты тура с невалидными данными владельца дебетовой карты (1 буква)")
     public void testCashInvalidOwnerCyrillic() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -377,12 +318,12 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("20. Попытка оплаты тура с не заполненными полями формы для дебетовой карты")
+    @DisplayName("18. Попытка оплаты тура с не заполненными полями формы для дебетовой карты")
     public void testCashEmptyFields() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
@@ -393,13 +334,12 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getEmptyCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
-    // Позитивные сценарии (оплата тура кредитной картой)
-
+    // Сценарии на проверку статуса оплаты тура кредитной картой
     @Test
-    @DisplayName("1. Оплата тура с валидной кредитной картой")
+    @DisplayName("1. Оплата тура с валидной кредитной картой со статусом APPROVED")
     public void testCreditValidCard() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -410,59 +350,25 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findCreditStatus());
+        assertEquals("APPROVED", DataSql.findCreditStatus());
     }
 
     @Test
-    @DisplayName("2. Повторная оплата тура с валидной кредитной картой")
-    public void testRepeatCreditValidCard() {
-        testCreditValidCard();
+    @DisplayName("2.Оплата тура с валидной кредитной картой со статусом DECLINED")
+    public void testCreditValidCardDeclined() {
+        var pageTour = open("http://localhost:8080", PaymentPage.class);
+        pageTour.buyInCredit();
+        pageTour.setCardNumber(DataHelper.getCardNumberDeclined());
+        pageTour.setCardMonth(DataHelper.getMonth());
+        pageTour.setCardYear(DataHelper.getYear());
+        pageTour.setCardUser(DataHelper.getUser());
+        pageTour.setCardCVC(DataHelper.getCvc());
+        pageTour.clickContinueButton();
+        pageTour.messageError();
+        assertEquals("DECLINED", DataSql.findCreditStatus());
     }
 
-    @Test
-    @DisplayName("3. Оплата тура с кредитной картой с достаточным лимитом")
-    public void testCreditCardWithSufficientLimit() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findCreditStatus());
-    }
 
-    @Test
-    @DisplayName("4. Оплата тура с кредитной картой с недостаточным лимитом, но с возможностью превышения лимита")
-    public void testCreditCardWithInsufficientLimitButPossible() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findCreditStatus());
-    }
-
-    @Test
-    @DisplayName("5. Оплата тура с кредитной картой с ограничениями на проведение операций")
-    public void testCreditCardWithOperationRestrictions() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser (DataHelper.getUser ());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.messageSuccess();
-        assertEquals("APPROVED", DataMySql.findCreditStatus());
-    }
 
     // Негативные сценарии (валидации кредитной карты)
 
@@ -478,7 +384,7 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.messageError();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
@@ -486,18 +392,18 @@ public class PaymentTest {
     public void testCreditCardNotFilled() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
-        paymentPage.setCardNumber("444444444444444");
+        paymentPage.setCardNumber(DataHelper.getCardNumberNotFilled());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("3. Попытка оплаты тура с невалидными данными владельца кредитной карты")
+    @DisplayName("3. Попытка оплаты тура с невалидными данными владельца кредитной карты(кириллица)")
     public void testCreditInvalidOwnerName() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -507,12 +413,12 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("4. Попытка оплаты тура с невалидным сроком действия кредитной карты")
+    @DisplayName("4. Попытка оплаты тура с невалидным сроком действия кредитной карты(13 месяц)")
     public void testCreditInvalidExpirationDate() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -523,7 +429,7 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
@@ -538,11 +444,11 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.get1Cvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("6. Попытка оплаты тура с невалидным месяцем кредитной карты")
+    @DisplayName("6. Попытка оплаты тура с невалидным месяцем кредитной карты(00)")
     public void testCreditInvalidMonth() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -552,79 +458,83 @@ public class PaymentTest {
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.cardExpired();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("7. Попытка оплаты тура с невалидным годом кредитной карты")
+    @DisplayName("7. Попытка оплаты тура с невалидным годом кредитной карты(истекший)")
     public void testCreditInvalidYear() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
         paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear("23");
+        paymentPage.setCardYear(DataHelper.getPreviousYear());
         paymentPage.setCardUser (DataHelper.getUser ());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.cardExpired();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("8. Попытка оплаты тура с заполненным только номером кредитной карты")
+    @DisplayName("8. Попытка оплаты тура с не заполненным только номером кредитной карты")
     public void testCreditOnlyCardNumber() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber("4444 4444 4444 4442");
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
-
-    @Test
-    @DisplayName("9. Попытка оплаты тура с заполненным только именем владельца кредитной карты")
-    public void testCreditOnlyOwnerName() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardMonth(DataHelper.getEmptyMonth());
-        paymentPage.setCardYear(DataHelper.getEmptyYear());
-        paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
-        paymentPage.setCardUser ("Ivanov Ivan");
-        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
-
-    @Test
-    @DisplayName("10. Попытка оплаты тура с заполненным только сроком действия кредитной карты")
-    public void testCreditOnlyExpirationDate() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardUser(DataHelper.getEmptyUser());
-        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("11. Попытка оплаты тура с заполненным только кодом безопасности кредитной карты")
+    @DisplayName("9. Попытка оплаты тура с не заполненным только именем владельца кредитной карты")
+    public void testCreditOnlyOwnerName() {
+        var paymentPage = open("http://localhost:8080", PaymentPage.class);
+        paymentPage.buyInCredit();
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getYear());
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardUser (DataHelper.getEmptyUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
+        paymentPage.clickContinueButton();
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
+    }
+
+    @Test
+    @DisplayName("10. Попытка оплаты тура с не заполненным только сроком действия кредитной карты(год)")
+    public void testCreditOnlyExpirationDate() {
+        var paymentPage = open("http://localhost:8080", PaymentPage.class);
+        paymentPage.buyInCredit();
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getEmptyYear());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getCvc());
+        paymentPage.clickContinueButton();
+        paymentPage.incorrectFormat();
+        assertEquals(0, DataSql.getOrderEntityCount());
+    }
+
+    @Test
+    @DisplayName("11. Попытка оплаты тура с не заполненным только кодом безопасности кредитной карты")
     public void testCreditOnlyCvc() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberEmpty());
-        paymentPage.setCardMonth(DataHelper.getEmptyMonth());
-        paymentPage.setCardYear(DataHelper.getEmptyYear());
-        paymentPage.setCardUser(DataHelper.getEmptyUser());
-        paymentPage.setCardCVC("123");
+        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
+        paymentPage.setCardMonth(DataHelper.getMonth());
+        paymentPage.setCardYear(DataHelper.getYear());
+        paymentPage.setCardUser(DataHelper.getUser());
+        paymentPage.setCardCVC(DataHelper.getEmptyCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
@@ -634,31 +544,18 @@ public class PaymentTest {
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
         paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear("45");
+        paymentPage.setCardYear(DataHelper.getCurrentYearPlus6());
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
         paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
-    @Test
-    @DisplayName("13. Попытка оплаты тура с невалидным форматом номера кредитной карты")
-    public void testCreditInvalidCardFormat() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberNotFilled());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getYear());
-        paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
+
 
     @Test
-    @DisplayName("14. Попытка оплаты тура с невалидным форматом имени владельца кредитной карты")
+    @DisplayName("13. Попытка оплаты тура с невалидным форматом имени владельца кредитной карты(3 слова)")
     public void testCreditInvalidOwnerFormat() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -668,27 +565,14 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
-    @Test
-    @DisplayName("15. Попытка оплаты тура с невалидным форматом срока действия кредитной карты")
-    public void testCreditInvalidExpirationFormat() {
-        var paymentPage = open("http://localhost:8080", PaymentPage.class);
-        paymentPage.buyInCredit();
-        paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardMonth(DataHelper.getMonth());
-        paymentPage.setCardYear(DataHelper.getCurrentYearPlus6());
-        paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC(DataHelper.getCvc());
-        paymentPage.clickContinueButton();
-        paymentPage.invalidCardExpirationDate();
-        assertEquals(0, DataMySql.getOrderEntityCount());
-    }
+
 
     @Test
-    @DisplayName("16. Попытка оплаты тура с невалидным форматом CVV кода кредитной карты")
+    @DisplayName("14. Попытка оплаты тура с невалидным форматом CVV кода кредитной карты(2 цифры)")
     public void testCreditInvalidCvcFormat() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -696,44 +580,44 @@ public class PaymentTest {
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser(DataHelper.getUser());
-        paymentPage.setCardCVC("12");
+        paymentPage.setCardCVC(DataHelper.get2Cvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("17. Попытка оплаты тура с невалидными данными владельца кредитной карты")
+    @DisplayName("15. Попытка оплаты тура с невалидными данными владельца кредитной карты(символы)")
     public void testCreditInvalidOwnerSpecialCharacters() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("%;%:?*(@!$");
+        paymentPage.setCardUser(DataHelper.getSpecialCharactersUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("18. Попытка оплаты тура с невалидными данными владельца кредитной карты (цифра)")
+    @DisplayName("16. Попытка оплаты тура с невалидными данными владельца кредитной карты (цифра)")
     public void testCreditInvalidOwnerNumber() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("1");
+        paymentPage.setCardUser(DataHelper.getNumberUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("19. Попытка оплаты тура с невалидными данными владельца кредитной карты (кириллица)")
+    @DisplayName("17. Попытка оплаты тура с невалидными данными владельца кредитной карты (1 буква)")
     public void testCreditInvalidOwnerCyrillic() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -743,12 +627,12 @@ public class PaymentTest {
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
         paymentPage.clickContinueButton();
-        paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        paymentPage.requiredField();
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 
     @Test
-    @DisplayName("20. Попытка оплаты тура с не заполненными полями формы для кредитной карты")
+    @DisplayName("18. Попытка оплаты тура с не заполненными полями формы для кредитной карты")
     public void testCreditEmptyFields() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -759,6 +643,6 @@ public class PaymentTest {
         paymentPage.setCardCVC(DataHelper.getEmptyCvc());
         paymentPage.clickContinueButton();
         paymentPage.incorrectFormat();
-        assertEquals(0, DataMySql.getOrderEntityCount());
+        assertEquals(0, DataSql.getOrderEntityCount());
     }
 }

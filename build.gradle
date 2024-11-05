@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id "io.freefair.lombok" version '8.2.2' // Плагин для поддержки Lombok, упрощает работу с Java-кодом
+//    id "io.freefair.lombok" version '8.2.2' // Плагин для поддержки Lombok, упрощает работу с Java-кодом
     id 'io.qameta.allure' version '2.9.6' // Плагин для интеграции Allure Reports, для генерации отчетов о тестировании
 }
 
@@ -33,6 +33,7 @@ dependencies {
     testImplementation 'io.qameta.allure:allure-selenide:2.20.1'
 
     testImplementation 'mysql:mysql-connector-java:8.0.32' // Драйвер MySQL для подключения к базе данных в тестах
+    implementation 'org.postgresql:postgresql:42.2.23' // Драйвер PostgreSQL
     testImplementation 'commons-dbutils:commons-dbutils:1.7' // Утилиты для работы с базами данных
     testImplementation 'io.github.bonigarcia:webdrivermanager:5.9.2' // WebDriverManager для автоматической настройки драйверов браузеров
     testImplementation 'com.github.javafaker:javafaker:1.0.2' // Библиотека для генерации случайных данных (для тестов)

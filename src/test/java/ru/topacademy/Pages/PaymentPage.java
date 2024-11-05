@@ -104,7 +104,7 @@ public class PaymentPage {
         requiredField.shouldBe(visible, Duration.ofSeconds(15));
     }
 
-    // Метод для получения текста сообщения об ошибке(баланс)
+    // Метод для получения текста сообщения об ошибке
     public String getErrorMessage() {
         SelenideElement errorMessageElement = $(By.className("error-message"));
 
@@ -114,7 +114,7 @@ public class PaymentPage {
             return errorMessageElement.getText();
         } catch (ElementNotFound e) {
             // Если элемент не найден, возвращаем сообщение об ошибке
-            return "Сообщение об ошибке не найдено"; // Или можно вернуть null, в зависимости от требований
+            return "Сообщение об ошибке не найдено";
         }
     }
 

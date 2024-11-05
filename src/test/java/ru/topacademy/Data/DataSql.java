@@ -5,7 +5,7 @@ import org.apache.commons.dbutils.handlers.ScalarHandler;
 
 import java.sql.*;
 
-public class DataMySql {
+public class DataSql {
 
 
     // Константы для подключения к базе данных, получаемые из системных свойств.
@@ -51,7 +51,7 @@ public class DataMySql {
 
     // Метод для поиска статуса кредита в базе данных.
     public static String findCreditStatus() {
-        String statusSQL = "SELECT status FROM credit_request_entity;"; // SQL-запрос для получения статуса кредита.
+        String statusSQL = "SELECT status FROM credit_request_entity"; // SQL-запрос для получения статуса кредита.
         try {
             Connection connection = DriverManager.getConnection(url, user, password);
             Statement statement = connection.createStatement(); // Создание объекта для выполнения SQL-запросов.
