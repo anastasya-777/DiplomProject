@@ -6,7 +6,11 @@ import org.apache.commons.dbutils.handlers.ScalarHandler;
 import java.sql.*;
 
 public class DataSql {
-
+    
+     // Закрытый конструктор, чтобы предотвратить создание экземпляров класса
+    private DataSql() {
+        throw new UnsupportedOperationException("Utility class");
+    }
 
     // Константы для подключения к базе данных, получаемые из системных свойств.
     private static final String url = System.getProperty("db.url");
