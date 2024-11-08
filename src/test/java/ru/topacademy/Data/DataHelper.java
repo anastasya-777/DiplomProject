@@ -10,6 +10,10 @@ public class DataHelper {
     // Создаем экземпляр Faker для генерации случайных данных на английском языке
     private static final Faker faker = new Faker(new Locale("en"));
 
+    private DataHelper() {
+        // Приватный конструктор, чтобы предотвратить создание экземпляров класса
+    }
+
     // Возвращает заранее заданный номер карты, который будет одобрен
     public static String getCardNumberApproved() {
         return "4444 4444 4444 4441";
