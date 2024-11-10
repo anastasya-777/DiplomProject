@@ -1,7 +1,7 @@
 
 FROM node:14
 
-# определение переменных среды
+# определение переменных среды для линукс
 ENV HOME=/app
 ENV NODE_ENV=production
 ENV NODE_PORT=9999
@@ -12,7 +12,7 @@ WORKDIR /usr/src/app
 # Копируем package.json и package-lock.json
 COPY package*.json ./
 
-# Устанавливаем зависимости
+# Устанавливаем зависимости для запуска приложения
 RUN npm install
 
 # Копируем остальные файлы

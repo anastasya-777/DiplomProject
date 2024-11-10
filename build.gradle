@@ -1,6 +1,5 @@
 plugins {
     id 'java'
-//    id "io.freefair.lombok" version '8.2.2' // Плагин для поддержки Lombok, упрощает работу с Java-кодом
     id 'io.qameta.allure' version '2.9.6' // Плагин для интеграции Allure Reports, для генерации отчетов о тестировании
 }
 

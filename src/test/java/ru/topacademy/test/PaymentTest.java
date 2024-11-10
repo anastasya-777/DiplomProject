@@ -99,7 +99,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("Иванов Иван");
+        paymentPage.setCardUser (DataHelper.getRussianUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -114,7 +114,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardMonth("13");
+        paymentPage.setCardMonth(DataHelper.getInvalidMonth13());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser(DataHelper.getUser());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -251,7 +251,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("Ivanov Ivan Ivan");
+        paymentPage.setCardUser (DataHelper.getUserFullName());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -313,7 +313,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyWithCash();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("А");
+        paymentPage.setCardUser (DataHelper.getUser1());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -408,7 +408,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("Иванов Иван");
+        paymentPage.setCardUser (DataHelper.getRussianUser());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -423,7 +423,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardMonth("13");
+        paymentPage.setCardMonth(DataHelper.getInvalidMonth13());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardUser (DataHelper.getUser ());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -433,7 +433,7 @@ public class PaymentTest {
     }
 
     @Test
-    @DisplayName("5. Попытка оплаты тура с невалидным CVV кодом кредитной карты")
+    @DisplayName("5. Попытка оплаты тура с невалидным CVV кодом кредитной карты(1 цифра)")
     public void testCreditInvalidCvcCode() {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
@@ -560,7 +560,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("Ivanov Ivan Ivan");
+        paymentPage.setCardUser (DataHelper.getUserFullName());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());
@@ -622,7 +622,7 @@ public class PaymentTest {
         var paymentPage = open("http://localhost:8080", PaymentPage.class);
         paymentPage.buyInCredit();
         paymentPage.setCardNumber(DataHelper.getCardNumberApproved());
-        paymentPage.setCardUser ("А");
+        paymentPage.setCardUser (DataHelper.getUser1());
         paymentPage.setCardMonth(DataHelper.getMonth());
         paymentPage.setCardYear(DataHelper.getYear());
         paymentPage.setCardCVC(DataHelper.getCvc());

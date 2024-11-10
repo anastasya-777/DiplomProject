@@ -10,6 +10,10 @@ public class DataHelper {
     // Создаем экземпляр Faker для генерации случайных данных на английском языке
     private static final Faker faker = new Faker(new Locale("en"));
 
+    private DataHelper() {
+        // Приватный конструктор, чтобы предотвратить создание экземпляров класса
+    }
+
     // Возвращает заранее заданный номер карты, который будет одобрен
     public static String getCardNumberApproved() {
         return "4444 4444 4444 4441";
@@ -129,6 +133,28 @@ public class DataHelper {
         return "";
     }
 
+    // Генерируем одну случайную букву от 'A' до 'Z' в поле Владелец
+    public static String getUser1() {
+        char getUser1 = (char) ('A' + faker.number().numberBetween(0, 26));
+        return String.valueOf(getUser1);
+    }
 
+    // Генерирует имя и фамилию пользователя на русском языке
+    public static String getRussianUser () {
+        Faker russianFaker = new Faker(new Locale("ru")); // Создаем новый экземпляр Faker с русской локализацией
+        String firstName = russianFaker.name().firstName(); // Получаем имя
+        String lastName = russianFaker.name().lastName(); // Получаем фамилию
+        return firstName + " " + lastName; // Возвращаем имя и фамилию
+    }
+
+    // Генерация полного имени пользователя на английском языке
+    public static String getUserFullName () {
+        return faker.name().fullName(); // Генерация полного имени на английском
+    }
+
+    // Возвращает недопустимый месяц (13)
+    public static String getInvalidMonth13() {
+        return "13";
+    }
 
 }

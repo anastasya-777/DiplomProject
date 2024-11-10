@@ -7,6 +7,12 @@ import java.sql.*;
 
 public class DataSql {
 
+    // Приватный конструктор, чтобы предотвратить создание экземпляров класса и
+    // выброса исключения при попытке создать экземпляр класса
+    private DataSql() {
+        throw new UnsupportedOperationException("Utility class");
+    }
+
 
     // Константы для подключения к базе данных, получаемые из системных свойств.
     private static final String url = System.getProperty("db.url");
@@ -22,6 +28,7 @@ public class DataSql {
         QueryRunner runner = new QueryRunner(); // Создание экземпляра QueryRunner для выполнения запросов.
 
         // Подключение к базе данных и выполнение запросов на удаление.
+        //Блок try с Connection автоматически закрывает объект Connection после завершения работы,воизбежание утечек ресурсов.
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
             runner.update(conn, deleteOrderEntity);
             runner.update(conn, deletePaymentEntity);
@@ -68,18 +75,9 @@ public class DataSql {
     }
 
     // Метод для получения данных по выполненному SQL-запросу.
-    private static String getData(String query) throws SQLException {
-        QueryRunner runner = new QueryRunner();
-        String data = "";
-        try (Connection conn = DriverManager.getConnection(url, user, password)) {
-            data = runner.query(conn, query, new ScalarHandler<>()); // Выполнение запроса и получение одного значения.
-        } catch (SQLException e) {
-            e.printStackTrace(); // Обработка исключений.
-        }
-        return data;
-    }
 
-    // Метод для получения количества записей в таблице order_entity.
+
+    // Метод для проверки состояния базы данных и получения количества записей в таблице order_entity.
     public static long getOrderEntityCount() {
         String countSQL = "SELECT COUNT(*) FROM order_entity;"; // SQL-запрос для подсчета записей.
         try (Connection conn = DriverManager.getConnection(url, user, password)) {
