@@ -74,9 +74,6 @@ public class DataSql {
         }
     }
 
-    // Метод для получения данных по выполненному SQL-запросу.
-
-
     // Метод для проверки состояния базы данных и получения количества записей в таблице order_entity.
     public static long getOrderEntityCount() {
         String countSQL = "SELECT COUNT(*) FROM order_entity;"; // SQL-запрос для подсчета записей.
