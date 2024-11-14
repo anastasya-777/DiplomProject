@@ -13,6 +13,11 @@ public class DataSql {
     private static final String user = System.getProperty("db.user");
     private static final String password = System.getProperty("db.password");
 
+    // Приватный конструктор для предотвращения создания экземпляров класса.
+    private DataSql() {
+        throw new UnsupportedOperationException("Этот класс не может быть инстанцирован");
+    }
+
     // Метод для очистки таблиц в базе данных.
     public static void clearTables() {
         // SQL-запросы для удаления всех записей из таблиц.
